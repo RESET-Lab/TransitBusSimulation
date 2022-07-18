@@ -25,6 +25,7 @@ pandas = "*"
 matplotlib = "*"
 scipy = "*"
 numba = "==0.51.2"
+geopandas = "*"
 
 [dev-packages]
 ipython = "*"
