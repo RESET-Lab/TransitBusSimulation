@@ -1,0 +1,1 @@
+http://10.101.10.31/geoserver/wfs?format_options=charset%3AUTF-8&typename=geonode%3Adistrito_pducp25&outputFormat=SHAPE-ZIP&version=1.0.0&service=WFS&request=GetFeature

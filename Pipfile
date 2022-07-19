@@ -26,6 +26,7 @@ matplotlib = "*"
 scipy = "*"
 numba = "==0.51.2"
 geopandas = "*"
+tqdm = "*"
 
 [dev-packages]
 ipython = "*"
