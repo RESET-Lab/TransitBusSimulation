@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import time
 import geopandas as gpd
 from matplotlib import colors
 import matplotlib.pyplot as plt
@@ -24,13 +25,13 @@ def run_fastsim(drive_cycle_path, veh_jit):
     :returns: FASTSim dict of summary output variables.
     '''
     # Load and instantiate Cycle
-    t0 = time.time()
     cyc_dict = load_drive_cycle(drive_cycle_path, num_segments=6, visualize=False)
     cyc = cycle.Cycle(cyc_dict=cyc_dict)
     cyc_jit = cyc.get_numba_cyc()
-    print(f'Time to load cycle: {time.time() - t0:.2e} s')
 
     # Run FASTSim
+    # Note: when the simulation keeps running beyond when SOC hits 0% we get the
+    # 'Warning: There is a problem with conservation of energy' message.
     t0 = time.time()
     sim_drive = simdrive.SimDriveJit(cyc_jit, veh_jit)
     sim_drive.sim_drive()
@@ -38,8 +39,10 @@ def run_fastsim(drive_cycle_path, veh_jit):
     output = sim_drive_post.get_output()
     print(f'Time to run simulation: {time.time() - t0:.2e} s')
 
-    # Compute a few more values on the output
-    # Attach some additional information from the sim_drive instance that SimDrivePost doesn't
+    # Compute and attach a few more values on the output
+    output['speed'] = cyc.cycMps
+    output['essKwOutAch'] = sim_drive.essKwOutAch
+
     # Cumulative distance series
     dist_per_step = sim_drive.distMeters
     output['cumDistKm'] = cum_series(dist_per_step) / m_per_km
@@ -58,8 +61,9 @@ def run_fastsim(drive_cycle_path, veh_jit):
         if abs(output['soc'][i]) <= 10**(-5): # TODO smarter search if too slow
             minSoc_time = i
             break
-    minSoc_dist = output['cumDistKm'][minSoc_time]
-    print(f'Bus range before 0% S0C: {minSoc_dist:.02f} km')
+    output['rangeKm'] = output['cumDistKm'][minSoc_time]
+    # print(f'Bus range before 0% S0C: {output['rangeKm']:.02f} km')
+    # print(f'Total energy capacity required: {output["cumKwh"][minSoc_time]:.02f} kWh')
     return output
 
 def load_drive_cycle(path, num_segments=None, visualize=False):
