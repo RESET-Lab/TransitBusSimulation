@@ -25,7 +25,7 @@ def run_fastsim(drive_cycle_path, veh_jit):
     :returns: FASTSim dict of summary output variables.
     '''
     # Load and instantiate Cycle
-    cyc_dict = load_drive_cycle(drive_cycle_path, num_segments=6, visualize=False)
+    cyc_dict = load_drive_cycle(drive_cycle_path, num_segments=None, visualize=False)
     cyc = cycle.Cycle(cyc_dict=cyc_dict)
     cyc_jit = cyc.get_numba_cyc()
 
@@ -56,11 +56,13 @@ def run_fastsim(drive_cycle_path, veh_jit):
 
     # Distance when we hit 0% S.0.C.
     num_steps = len(output['soc'])
-    minSoc_time = num_steps
+    minSoc_time = num_steps - 1
     for i in range(num_steps):
         if abs(output['soc'][i]) <= 10**(-5): # TODO smarter search if too slow
             minSoc_time = i
             break
+    if minSoc_time == num_steps-1:
+        print('S.O.C. 0% never reached!') # TODO do something smarter, could often not reach 0 in general
     output['rangeKm'] = output['cumDistKm'][minSoc_time]
     # print(f'Bus range before 0% S0C: {output['rangeKm']:.02f} km')
     # print(f'Total energy capacity required: {output["cumKwh"][minSoc_time]:.02f} kWh')
