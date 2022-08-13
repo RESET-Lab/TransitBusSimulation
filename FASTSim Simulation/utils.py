@@ -109,8 +109,6 @@ def load_drive_cycle(path, num_segments=None, visualize=False):
     # LOGIOS speed measurements are km/h. Convert to m/s for fastsim
     cyc_df.Speed *= 1000/3600
 
-    # TODO confirm LOGIOS grade meeasurements are in units expected by FASTSim
-
     # Overwrite index and time to be monotonically increasing. The individual cycle files were each
     # re-indexed to 0 by LOGIOS.
     cyc_df.Time[:] = range(0,len(cyc_df.Time))
@@ -126,6 +124,7 @@ def load_drive_cycle(path, num_segments=None, visualize=False):
 
 # Given a timeseries of measurements (e.g. timeseries of 1-second distance travelled)
 # Return a new timseries of cumulative measurements (e.g. timeseries of total distance)
+# TODO depricate this in favor of pandas series cumsum()
 def cum_series(x):
     n = len(x)
     y = np.zeros(n)
