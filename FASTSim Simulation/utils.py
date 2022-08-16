@@ -52,14 +52,16 @@ def run_fastsim(drive_cycle_path, veh_jit, segment_averaged=False):
     dist_per_step = sim_drive.distMeters
     output['cumDistKm'] = cum_series(dist_per_step) / m_per_km
 
-    # Cumulative kWh series: i.e. cumulative energy required to get to a given timestep.
-    # essKwOutAch is a series of kW output per second
+    # Cumulative kWh series: Cumulative energy required of battery storage (i.e. how much must be stored
+    # in the battery at the start) to reach to a given timestep before battery hits 0% SOC.
+    # Note: essKwOutAch is a series of kW output per second
     sign_toggle = (sim_drive.essKwOutAch > 0).astype(int)
-    # Strip out negative power output measurements (from regenerative breaking)
+    # Zero out negative power output measurements (from regenerative breaking) as they are not relevant to
+    # determining how much energy the battery itself must bring to the party.
     pos_essKwOutAch = sim_drive.essKwOutAch * sign_toggle
     output['cumKwh'] = cum_series(pos_essKwOutAch) / s_per_hour
 
-    # Distance when we hit 0% S.0.C.
+    # Distance when we hit minimum S.0.C.
     num_steps = len(output['soc'])
     minSoc_time = num_steps - 1
     for i in range(num_steps):
@@ -68,6 +70,7 @@ def run_fastsim(drive_cycle_path, veh_jit, segment_averaged=False):
             break
     if minSoc_time == num_steps-1:
         print('S.O.C. 0% never reached!') # TODO do something smarter, could often not reach 0 in general
+    output['minSoc_time'] = minSoc_time
     output['rangeKm'] = output['cumDistKm'][minSoc_time]
     # print(f'Bus range before 0% S0C: {output['rangeKm']:.02f} km')
     # print(f'Total energy capacity required: {output["cumKwh"][minSoc_time]:.02f} kWh')
